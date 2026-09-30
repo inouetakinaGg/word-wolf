@@ -1,1 +1,463 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ワードウルフ</title>
 
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family:
+        -apple-system,
+        BlinkMacSystemFont,
+        "Noto Sans JP",
+        sans-serif;
+      background: #f5f5f5;
+      color: #222;
+    }
+
+    .app {
+      max-width: 480px;
+      min-height: 100vh;
+      margin: auto;
+      background: white;
+      padding: 24px 18px;
+    }
+
+    h1 {
+      text-align: center;
+      margin: 10px 0 30px;
+      font-size: 32px;
+    }
+
+    h2 {
+      text-align: center;
+      margin-bottom: 25px;
+    }
+
+    .screen {
+      display: none;
+    }
+
+    .screen.active {
+      display: block;
+    }
+
+    .card {
+      background: #fafafa;
+      border-radius: 18px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      font-weight: bold;
+      margin-bottom: 8px;
+    }
+
+    input,
+    select {
+      width: 100%;
+      padding: 14px;
+      border: 1px solid #ccc;
+      border-radius: 10px;
+      font-size: 16px;
+      background: white;
+    }
+
+    button {
+      width: 100%;
+      border: none;
+      border-radius: 12px;
+      padding: 15px;
+      margin-top: 10px;
+      font-size: 17px;
+      font-weight: bold;
+      cursor: pointer;
+      background: #222;
+      color: white;
+    }
+
+    button.secondary {
+      background: #ddd;
+      color: #222;
+    }
+
+    button.danger {
+      background: #d33;
+    }
+
+    button:active {
+      transform: scale(0.98);
+    }
+
+    .player-list {
+      margin-top: 15px;
+    }
+
+    .player {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: white;
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      padding: 10px 12px;
+      margin-bottom: 8px;
+    }
+
+    .player button {
+      width: auto;
+      margin: 0;
+      padding: 7px 12px;
+      font-size: 14px;
+      background: #d33;
+    }
+
+    .word-box {
+      text-align: center;
+      background: #222;
+      color: white;
+      border-radius: 18px;
+      padding: 35px 15px;
+      margin: 25px 0;
+    }
+
+    .word {
+      font-size: 36px;
+      font-weight: bold;
+      margin-top: 15px;
+    }
+
+    .hidden-word {
+      font-size: 18px;
+      color: #aaa;
+    }
+
+    .info {
+      text-align: center;
+      color: #666;
+      line-height: 1.7;
+    }
+
+    .timer {
+      text-align: center;
+      font-size: 50px;
+      font-weight: bold;
+      margin: 25px 0;
+    }
+
+    .result-player {
+      background: #fafafa;
+      border-radius: 12px;
+      padding: 15px;
+      margin-bottom: 10px;
+    }
+
+    .role-wolf {
+      color: #d33;
+      font-weight: bold;
+    }
+
+    .role-citizen {
+      color: #2674d9;
+      font-weight: bold;
+    }
+
+    .winner {
+      text-align: center;
+      font-size: 24px;
+      font-weight: bold;
+      margin: 25px 0;
+    }
+
+    .small {
+      font-size: 13px;
+      color: #777;
+      text-align: center;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="app">
+
+  <!-- ========================= -->
+  <!-- タイトル -->
+  <!-- ========================= -->
+
+  <section id="titleScreen" class="screen active">
+
+    <h1>🐺 ワードウルフ</h1>
+
+    <div class="card">
+      <p class="info">
+        みんなに似たお題が配られる。<br>
+        でも、1人だけ違うお題。<br><br>
+        会話からウルフを見つけ出せ！
+      </p>
+    </div>
+
+    <button onclick="showScreen('setupScreen')">
+      ゲームを始める
+    </button>
+
+  </section>
+
+
+  <!-- ========================= -->
+  <!-- 設定 -->
+  <!-- ========================= -->
+
+  <section id="setupScreen" class="screen">
+
+    <h2>ゲーム設定</h2>
+
+    <div class="card">
+
+      <label>プレイヤー人数</label>
+
+      <select id="playerCount">
+        <option value="3">3人</option>
+        <option value="4">4人</option>
+        <option value="5">5人</option>
+        <option value="6" selected>6人</option>
+        <option value="7">7人</option>
+        <option value="8">8人</option>
+        <option value="9">9人</option>
+        <option value="10">10人</option>
+      </select>
+
+    </div>
+
+
+    <div class="card">
+
+      <label>議論時間</label>
+
+      <select id="discussionTime">
+        <option value="60">1分</option>
+        <option value="120" selected>2分</option>
+        <option value="180">3分</option>
+        <option value="300">5分</option>
+      </select>
+
+    </div>
+
+
+    <button onclick="createPlayers()">
+      プレイヤー設定へ
+    </button>
+
+    <button class="secondary" onclick="showScreen('titleScreen')">
+      戻る
+    </button>
+
+  </section>
+
+
+  <!-- ========================= -->
+  <!-- プレイヤー名 -->
+  <!-- ========================= -->
+
+  <section id="playersScreen" class="screen">
+
+    <h2>プレイヤー設定</h2>
+
+    <div class="card">
+
+      <p class="small">
+        名前を入力してください
+      </p>
+
+      <div id="playerInputs"></div>
+
+    </div>
+
+    <button onclick="startGame()">
+      ゲーム開始
+    </button>
+
+    <button class="secondary" onclick="showScreen('setupScreen')">
+      戻る
+    </button>
+
+  </section>
+
+
+  <!-- ========================= -->
+  <!-- お題確認 -->
+  <!-- ========================= -->
+
+  <section id="wordScreen" class="screen">
+
+    <h2 id="wordPlayerName">
+      プレイヤー
+    </h2>
+
+    <p class="info">
+      この画面を他の人に見せないでください。
+    </p>
+
+    <div class="word-box">
+
+      <div id="wordMessage">
+        ボタンを押すと<br>
+        あなたのお題が表示されます。
+      </div>
+
+      <div id="wordDisplay" class="word hidden-word">
+        お題
+      </div>
+
+    </div>
+
+    <button id="showWordButton" onclick="showMyWord()">
+      お題を見る
+    </button>
+
+    <button id="nextPlayerButton"
+            style="display:none;"
+            onclick="nextPlayer()">
+      次のプレイヤーへ
+    </button>
+
+  </section>
+
+
+  <!-- ========================= -->
+  <!-- 議論 -->
+  <!-- ========================= -->
+
+  <section id="discussionScreen" class="screen">
+
+    <h2>議論開始！</h2>
+
+    <p class="info">
+      お題について自由に話し合おう。<br>
+      ウルフが誰なのかを探せ！
+    </p>
+
+    <div id="timer" class="timer">
+      02:00
+    </div>
+
+    <button onclick="startTimer()" id="timerButton">
+      タイマー開始
+    </button>
+
+    <button class="secondary" onclick="showVoting()">
+      投票へ進む
+    </button>
+
+  </section>
+
+
+  <!-- ========================= -->
+  <!-- 投票 -->
+  <!-- ========================= -->
+
+  <section id="voteScreen" class="screen">
+
+    <h2>ウルフだと思う人</h2>
+
+    <div id="votePlayers"></div>
+
+  </section>
+
+
+  <!-- ========================= -->
+  <!-- 結果 -->
+  <!-- ========================= -->
+
+  <section id="resultScreen" class="screen">
+
+    <h2>結果発表</h2>
+
+    <div id="resultContent"></div>
+
+    <button onclick="newGame()">
+      もう一度遊ぶ
+    </button>
+
+    <button class="secondary" onclick="showScreen('titleScreen')">
+      タイトルへ戻る
+    </button>
+
+  </section>
+
+</div>
+
+
+<script>
+
+  /*
+   * =========================
+   * ゲームデータ
+   * =========================
+   */
+
+  const wordPairs = [
+
+    ["犬", "猫"],
+    ["海", "プール"],
+    ["ラーメン", "うどん"],
+    ["コーヒー", "紅茶"],
+    ["夏", "冬"],
+    ["寿司", "刺身"],
+    ["映画館", "遊園地"],
+    ["電車", "バス"],
+    ["カレー", "シチュー"],
+    ["スマホ", "パソコン"],
+    ["コンビニ", "スーパー"],
+    ["学校", "会社"],
+    ["野球", "サッカー"],
+    ["ビール", "コーラ"],
+    ["温泉", "銭湯"],
+    ["新幹線", "飛行機"],
+    ["ケーキ", "プリン"],
+    ["ゲーム", "漫画"],
+    ["焼肉", "しゃぶしゃぶ"],
+    ["朝", "夜"],
+    ["山", "海"],
+    ["夏休み", "冬休み"],
+    ["ディズニーランド", "ユニバーサル・スタジオ・ジャパン"],
+    ["マクドナルド", "モスバーガー"],
+    ["YouTube", "TikTok"],
+    ["LINE", "Instagram"],
+    ["旅行", "デート"],
+    ["財布", "スマホ"],
+    ["タクシー", "レンタカー"],
+    ["温泉旅行", "海水浴"],
+    ["唐揚げ", "天ぷら"],
+    ["チョコレート", "アイス"],
+    ["猫カフェ", "メイドカフェ"],
+    ["カラオケ", "ボウリング"],
+    ["パチンコ", "競馬"],
+    ["麻雀", "ポーカー"],
+    ["ホラー映画", "恋愛映画"],
+    ["漫画喫茶", "ホテル"],
+    ["ラーメン屋", "居酒屋"],
+    ["朝ごはん", "夜食"]
+
+  ];
+
+
+  let players = [];
+
+  let wolfIndex = 0;
+
+  let citizenWord = "";
+
+  let wolfWord = "";
+
+  let currentPlayer = 0;
+
+  let discussionSeconds = 120
